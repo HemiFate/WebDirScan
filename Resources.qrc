@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/">
+        <file>resouse/logo.png</file>
+        <file>resouse/SelectionBackground.png</file>
+        <file>resouse/Background.png</file>
+        <file>resouse/start.png</file>
+        <file>resouse/checklogo.png</file>
+        <file>resouse/port.png</file>
+        <file>resouse/doing.png</file>
+    </qresource>
+</RCC>
