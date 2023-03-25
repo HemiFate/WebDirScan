@@ -3,6 +3,8 @@
 #include <QDebug>
 #include <QCoreApplication>
 
+QQueue<QString> Multhread::MyQueue;
+
 Multhread::Multhread(QObject *parent ) : QThread(parent)
 {
 
@@ -31,15 +33,32 @@ void Multhread::GenerateTasks(QString filePath)
             //qDebug() << this->baseUrl << endl;
             str = this->baseUrl + str;
             qDebug() << str << endl;
-            this->Q.enqueue(str.remove(QChar('\n'), Qt::CaseInsensitive));
+            MyQueue.enqueue(str.remove(QChar('\n'), Qt::CaseInsensitive));
         }
-        this->Total = Q.size();
+        this->Total = MyQueue.size();
+        qDebug() << "Q size: " << MyQueue.size() << MyQueue.length() << endl;
         file.close();
     }
     else
     {
         qDebug() << "文件路径打开有问题" << endl;
+
     }
+
+}
+
+void Multhread::threadPause()
+{
+    qDebug() << "Thread Pause: " << endl;
+    threadPauseStatus = true;
+    threadPuseLock.lock();
+}
+
+void Multhread::threadResume()
+{
+    qDebug() << "Thread Resume: " << endl;
+    threadPauseStatus = false;
+    threadPuseLock.unlock();
 }
 
 void Multhread::setMessLegTime(QString strLegTime)
@@ -60,76 +79,82 @@ void Multhread::setMessUrlDir(const QString & tmpUrlDir)
     urlDir = tmpUrlDir;
 }
 
+void Multhread::stop()
+{
+    qDebug() << "QUEUE Size Now: " << MyQueue.size() << endl;
+   //this->quit();
+    this->isstop = 1;
+    wait();
+}
+
 void Multhread::run()
 {
+    qDebug() << "DealTimeoutObject1：" << QThread::currentThreadId() << QThread::currentThread();
+
     QMutex mutex;
+    mutex.lock();
     int status = 0;
     QString url = "";
     QNetworkAccessManager *netManager =new QNetworkAccessManager();
     NetConnect manager(netManager);
 
-    qDebug() <<  "Q CONTENT:" << Q.empty() << endl;
-    if(Q.empty())
+    qDebug() <<  " Q CONTENT: " << MyQueue.size() << MyQueue.empty() << endl;
+    if(MyQueue.empty())
     {
-//        if(this->isstop)
-//        {
-//            this->quit();
-//            return;
-//        }
-        mutex.lock();
         url = baseUrl + urlDir;
-        qDebug() << QString(url);
+        qDebug() << "----->>> " << QString(url);
+
         status = manager.retGetUrl(QUrl(url));
-        qDebug() << status << endl;
+        qDebug() << "reGetUrl status: " << status << endl;
         if(this->time)
             msleep(messLegTime);
 
         emit sigSentCurrentUrl(url);
         emit sigSentRetUrl(url);
-        mutex.unlock();
 
         if(status)
         {
-            QString strMess = "<font color =\"#6EFFFF\">"  + url + "</font>"; //color: #FFFFFF;font-weight:bold
+            QString strMess = "<font color =\"#6EFFFF\">"  + url
+                               + "    --->    This page is using!" + "</font>"; //color: #FFFFFF;font-weight:bold
             emit sigSentRetUrlToBrowser(strMess);
         }
+        //manager.deleteLater();
+        mutex.unlock();
     }
     else
     {
-        while(!this->Q.empty())
+        while(!MyQueue.empty())
         {
-            if(this->isstop)
+            if(!this->isstop)
+            {
+                threadPuseLock.lock();
+                url = MyQueue.dequeue();
+                qDebug() << QString(url);
+
+                status = manager.retGetUrl(QUrl(url));
+                qDebug() << status << endl;
+                if(this->time)
+                    msleep(messLegTime);
+
+                emit sigSentCurrentUrl(url);
+                emit sigSentRetUrl(url);
+
+
+                if(status)
+                {
+                    QString strMess = "<font color =\"#6EFFFF\">"  + url
+                                       + "    --->    This page is using!" + "</font>"; //color: #FFFFFF;font-weight:bold
+                    emit sigSentRetUrlToBrowser(strMess);
+                }
+               threadPuseLock.unlock();
+            }
+            else
             {
                 this->quit();
                 break;
             }
-            mutex.lock();
-            url = this->Q.dequeue();
-            qDebug() << QString(url);
-
-    //    if(this->isproxy){
-    //        Proxy * test= new Proxy();
-    //        test->generateList();
-    //        test->setProxy();
-    //        netManager->setProxy(test->m_proxy);
-    //    }
-            status = manager.retGetUrl(QUrl(url));
-            qDebug() << status << endl;
-            if(this->time)
-                msleep(messLegTime);
-
-            emit sigSentCurrentUrl(url);
-            emit sigSentRetUrl(url);
-            mutex.unlock();
-
-            if(status)
-            {
-                QString strMess = "<font color =\"#6EFFFF\">"  + url
-                                   + "    --->    This page is using!" + "</font>"; //color: #FFFFFF;font-weight:bold
-                emit sigSentRetUrlToBrowser(strMess);
-            }
         }
+       mutex.unlock();
     }
-
-    //msleep(10);
+    msleep(10);
 }

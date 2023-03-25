@@ -250,7 +250,7 @@ QSpinBox
 </string>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <property name="documentMode">
        <bool>false</bool>
@@ -269,7 +269,7 @@ QSpinBox
         <string notr="true"/>
        </property>
        <attribute name="title">
-        <string>信息收集</string>
+        <string>页面检测</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <property name="spacing">
@@ -760,7 +760,7 @@ font-weight:bold;</string>
                 </size>
                </property>
                <property name="text">
-                <string/>
+                <string>0</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -856,7 +856,7 @@ font-weight:bold;</string>
                 <string/>
                </property>
                <property name="alignment">
-                <set>Qt::AlignCenter</set>
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
                </property>
               </widget>
              </item>
@@ -1247,7 +1247,7 @@ font-weight:bold;</string>
                        </size>
                       </property>
                       <property name="text">
-                       <string/>
+                       <string>0</string>
                       </property>
                       <property name="alignment">
                        <set>Qt::AlignCenter</set>
@@ -1367,7 +1367,7 @@ font-weight:bold;</string>
                      </size>
                     </property>
                     <property name="text">
-                     <string>127.0.0.1</string>
+                     <string/>
                     </property>
                     <property name="alignment">
                      <set>Qt::AlignCenter</set>

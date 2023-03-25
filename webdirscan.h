@@ -10,6 +10,7 @@
 #include <QProcess>
 #include <QTextCodec>
 #include "multhread.h"
+#include "threadmanger.h"
 //#define ERROR_COLOR #d54623
 
 QT_BEGIN_NAMESPACE
@@ -90,5 +91,6 @@ private:
     QString ip;
     Multhread *threadAdd;
     NetConnect *netConnectHead;
+    threadManger *mulThreadManger;
 };
 #endif // WEBDIRSCAN_H

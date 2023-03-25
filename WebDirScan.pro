@@ -22,6 +22,7 @@ SOURCES += \
     netconnect.cpp \
     proxy.cpp \
     scanner.cpp \
+    threadmanger.cpp \
     webdirscan.cpp
 
 HEADERS += \
@@ -29,6 +30,7 @@ HEADERS += \
     netconnect.h \
     proxy.h \
     scanner.h \
+    threadmanger.h \
     webdirscan.h
 
 FORMS += \

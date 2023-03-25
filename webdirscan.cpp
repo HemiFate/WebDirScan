@@ -24,10 +24,14 @@ WebDirScan::WebDirScan(QWidget *parent)
     //检查当前页
     threadAdd = new Multhread();
     netConnectHead = new NetConnect();
-    //设置状态栏 设置显示的内容
-    connect(threadAdd, SIGNAL(sigSentCurrentUrl(QString)), this, SLOT(setCurrentUrl(QString)));
-    connect(threadAdd, SIGNAL(sigSentRetUrl(QString)), this, SLOT(setProBarMess(QString)));
-    connect(threadAdd, SIGNAL(sigSentRetUrlToBrowser(QString)), this, SLOT(setBrowserText(QString)));
+    mulThreadManger = new threadManger();
+    //设置状态栏 设置显示的内容  //setTmpReUrlToBrowser(QString) sentTmpReUrlToBrowser
+    connect(mulThreadManger, SIGNAL(sentTmpReUrlToBrowser(QString)), this, SLOT(setBrowserText(QString)));
+    connect(mulThreadManger, SIGNAL(sentTmpUrl(QString)), this, SLOT(setCurrentUrl(QString)));
+    connect(mulThreadManger, SIGNAL(sentTmpReUrl(QString)), this, SLOT(setProBarMess(QString)));
+
+    //线程数量的变化
+    connect(ui->leMessThread,SIGNAL(textChanged(const QString &)),  mulThreadManger, SLOT(mulThreadNum(const QString &)));
 
     connect(ui->lePortLegTime, SIGNAL(textChanged(const QString &)), scan, SLOT(setPortLegTime(const QString &)));
     connect(ui->leMessLegTime, SIGNAL(textChanged(const QString &)), threadAdd, SLOT(setMessLegTime(const QString &)));
@@ -55,7 +59,13 @@ void WebDirScan::initWindows()
    ui->lbMessHeadText->adjustSize();
    ui->lbMessHeadText->setWordWrap(true);
    ui->lbMessHeadText->setText(str);
-
+   ui->leMessThread->setValidator(new QIntValidator(ui->leMessThread));
+   ui->leMessLegTime->setValidator(new QIntValidator(ui->leMessLegTime));
+   ui->lePortThread->setValidator(new QIntValidator(ui->lePortThread));
+   ui->lePortLegTime->setValidator(new QIntValidator(ui->lePortLegTime));
+   ui->leWhoisApiKey->setValidator(new QRegExpValidator(QRegExp("[a-zA-Z0-9]+$")));
+   ui->lePortUrl->setValidator(new QRegExpValidator(QRegExp("\\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b")));
+   ui->lePortUrl->setInputMask("000.000.000.000; ");
 }
 
 void WebDirScan::on_pbtMessStart_clicked()
@@ -78,11 +88,9 @@ void WebDirScan::on_pbtMessStart_clicked()
                 QString fileRoute = ui->leMessRoute->text();
                 threadAdd->GenerateTasks(fileRoute);
             }
-            //threadAdd->isproxy = 1;
-            int threadNum = ui->leMessThread->text().toInt();
+
             threadAdd->time = ui->leMessLegTime->text().toUInt();
-            for (int i = 0; i < threadNum; ++i)
-                   threadAdd->start();
+            mulThreadManger->threadStart();
         }
         else    //当字典路径不是文件时，使用当前的后缀和名称+定义好的后缀进行访问
         {
@@ -95,7 +103,7 @@ void WebDirScan::on_pbtMessStart_clicked()
             qDebug() << threadAdd->baseUrl << endl;
             //QurlMess.enqueue(threadAdd->baseUrl);
             int pos = 0;
-            int threadNum = ui->leMessThread->text().toInt();
+            //int threadNum = ui->leMessThread->text().toInt();
 
             if(v.validate(baseUrlText, pos)==0 || baseUrlText == "")
             {
@@ -118,17 +126,17 @@ void WebDirScan::on_pbtMessStart_clicked()
             if(ui->CboxBACKUP->checkState())
                 threadAdd->GenerateTasks("./config/backup");
 
-            //threadAdd->isproxy = 1;
             threadAdd->time = ui->leMessLegTime->text().toUInt();
-            for (int i = 0; i < threadNum; ++i)
-                    threadAdd->start();
+
+            mulThreadManger->threadStart();
+
         }
 }
 
 
 void WebDirScan::on_pbtMessStop_clicked()
 {
-     threadAdd->isstop = 1;
+     mulThreadManger->threadStop();
 }
 
 void WebDirScan::on_proBarPort_valueChanged(int value)
@@ -148,16 +156,10 @@ void WebDirScan::setBrowserText(QString retUrl)
 
 void WebDirScan::setProBarMess(QString url)
 {
-    probarPercent = (1.0-(float(threadAdd->Q.size())/float(threadAdd->Total)))*100;
+    probarPercent = (1.0-(float(threadAdd->MyQueue.size())/float(threadAdd->Total)))*100;
     ui->proBarMess->setValue(probarPercent);
     ui->lbMessScanContent->setText(QString("%1").arg(url));
 
-    //qDebug() << "probarPercent:" << probarPercent << endl;
-//    if(probarPercent == 100)
-//    {
-//        ui->pbtMessStart->setText("开始");
-//        ui->textBrowser_2->append(">>>>>>  扫描结束！ <<<<<<");
-//    }
 }
 
 void WebDirScan::on_pbtPortStart_clicked()
